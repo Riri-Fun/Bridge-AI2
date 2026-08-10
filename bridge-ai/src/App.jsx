@@ -410,47 +410,150 @@ export default function BridgeAI() {
   }
 
   async function handleGenerate() {
-    if (!form.background.trim() || !form.targetName.trim() || !form.careerGoal.trim()) {
-      setError("Fill in your background, the person you're reaching out to, and your goal.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    setResult(null);
-    try {
-      const system = `You are a warm, specific networking coach for international students. Given the user's background, the professional they want to reach out to, and their career goal, produce outreach content that sounds human and specific to their situation — never generic or templated. Keep it concise so the whole response fits comfortably in a short reply.
-
-Return ONLY valid JSON, no markdown fences, no commentary, matching exactly this shape:
-{
-  "linkedinMessage": "a warm LinkedIn connection request, under 300 characters, written in first person as the user",
-  "coffeeChatQuestions": ["5 thoughtful, specific open-ended questions the user could ask in a 20-minute coffee chat"],
-  "followUpEmail": "a short thank-you follow-up email (3-4 sentences) the user can send after the chat, using [bracketed placeholders] for details that would come from the actual conversation",
-  "networkingStrategy": "a short 3-4 sentence strategy paragraph for how the user should approach this specific relationship and goal going forward"
-}`;
-      const userMsg = `My background: ${form.background}
-Person I want to connect with: ${form.targetName}${form.targetRole ? ", " + form.targetRole : ""}
-My goal: ${form.careerGoal}`;
-
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ system, message: userMsg }),
-      });
-      if (!response.ok) throw new Error("Request failed");
-      const data = await response.json();
-      const text = (data.content || [])
-        .map((b) => (b.type === "text" ? b.text : ""))
-        .join("\n");
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setResult(parsed);
-      setCurrentId(null);
-    } catch (e) {
-      setError("Couldn't generate a plan just now. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  if (
+    !form.background.trim() ||
+    !form.targetName.trim() ||
+    !form.careerGoal.trim()
+  ) {
+    setError(
+      "Fill in your background, the person you're reaching out to, and your goal."
+    );
+    return;
   }
+
+  setError("");
+  setLoading(true);
+  setResult(null);
+
+  try {
+    const system = `
+You are a warm, specific networking coach for international students.
+
+Given the user's background, the professional they want to reach out to,
+and their career goal, create a personalized networking plan.
+
+Return ONLY valid JSON.
+
+The JSON must match exactly this structure:
+
+{
+  "linkedinMessage": "A warm LinkedIn connection request under 300 characters.",
+  "coffeeChatQuestions": [
+    "Question 1",
+    "Question 2",
+    "Question 3",
+    "Question 4",
+    "Question 5"
+  ],
+  "followUpEmail": "A short 3-4 sentence thank-you email.",
+  "networkingStrategy": "A short 3-4 sentence strategy paragraph."
+}
+
+Do not use markdown.
+Do not use code fences.
+Do not add any explanation outside the JSON.
+`;
+
+    const userMsg = `
+My background:
+${form.background}
+
+Person I want to connect with:
+${form.targetName}${form.targetRole ? ", " + form.targetRole : ""}
+
+My career goal:
+${form.careerGoal}
+`;
+
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        system,
+        message: userMsg
+      })
+    });
+
+    const data = await response.json();
+
+    console.log("API response:", data);
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error || "API request failed"
+      );
+    }
+
+    const text =
+      data?.text ||
+      data?.content?.[0]?.text ||
+      "";
+
+    if (!text) {
+      throw new Error(
+        "API returned an empty response"
+      );
+    }
+
+    console.log("Gemini text:", text);
+
+    const clean = text
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    let parsed;
+
+    try {
+      parsed = JSON.parse(clean);
+    } catch (jsonError) {
+      console.error(
+        "JSON parsing failed:",
+        jsonError
+      );
+
+      console.error(
+        "Raw Gemini response:",
+        clean
+      );
+
+      throw new Error(
+        "Gemini returned invalid JSON"
+      );
+    }
+
+    if (
+      !parsed.linkedinMessage ||
+      !parsed.coffeeChatQuestions ||
+      !parsed.followUpEmail ||
+      !parsed.networkingStrategy
+    ) {
+      throw new Error(
+        "Gemini response is missing required fields"
+      );
+    }
+
+    setResult(parsed);
+    setCurrentId(null);
+
+  } catch (e) {
+    console.error(
+      "Bridge AI generation error:",
+      e
+    );
+
+    setError(
+      e?.message ||
+      "Couldn't generate a plan just now. Please try again."
+    );
+
+  } finally {
+    setLoading(false);
+  }
+}
 
   function handleNewSession() {
     setForm(emptyForm);
