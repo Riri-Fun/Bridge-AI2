@@ -426,13 +426,19 @@ export default function BridgeAI() {
   setResult(null);
 
   try {
-    const system = `
+   const system = `
 You are a warm, specific networking coach for international students.
 
-Given the user's background, the professional they want to reach out to,
-and their career goal, create a personalized networking plan.
+Create a personalized networking plan based on the user's background,
+target professional, and career goal.
 
-Return ONLY valid JSON.
+IMPORTANT:
+Return ONLY one valid JSON object.
+Do NOT explain your answer.
+Do NOT use markdown.
+Do NOT use code fences.
+Do NOT include any text before or after the JSON.
+Do NOT truncate the response.
 
 The JSON must match exactly this structure:
 
@@ -449,9 +455,7 @@ The JSON must match exactly this structure:
   "networkingStrategy": "A short 3-4 sentence strategy paragraph."
 }
 
-Do not use markdown.
-Do not use code fences.
-Do not add any explanation outside the JSON.
+Make sure the JSON object is completely closed with the final }.
 `;
 
     const userMsg = `
