@@ -468,12 +468,12 @@ ${form.careerGoal}
     const response = await fetch("/api/generate", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         system,
-        message: userMsg
-      })
+        message: userMsg,
+      }),
     });
 
     const data = await response.json();
@@ -481,9 +481,7 @@ ${form.careerGoal}
     console.log("API response:", data);
 
     if (!response.ok) {
-      throw new Error(
-        data?.error || "API request failed"
-      );
+      throw new Error(data?.error || "API request failed");
     }
 
     const text =
@@ -492,12 +490,10 @@ ${form.careerGoal}
       "";
 
     if (!text) {
-      throw new Error(
-        "API returned an empty response"
-      );
+      throw new Error("API returned an empty response");
     }
 
-    console.log("Gemini text:", text);
+    console.log("AI text:", text);
 
     const clean = text
       .replace(/^```json\s*/i, "")
@@ -510,40 +506,26 @@ ${form.careerGoal}
     try {
       parsed = JSON.parse(clean);
     } catch (jsonError) {
-      console.error(
-        "JSON parsing failed:",
-        jsonError
-      );
+      console.error("JSON parsing failed:", jsonError);
+      console.error("Raw AI response:", clean);
 
-      console.error(
-        "Raw Gemini response:",
-        clean
-      );
-
-      throw new Error(
-        "Gemini returned invalid JSON"
-      );
+      throw new Error("AI returned invalid JSON");
     }
 
     if (
       !parsed.linkedinMessage ||
-      !parsed.coffeeChatQuestions ||
+      !Array.isArray(parsed.coffeeChatQuestions) ||
       !parsed.followUpEmail ||
       !parsed.networkingStrategy
     ) {
-      throw new Error(
-        "Gemini response is missing required fields"
-      );
+      throw new Error("AI response is missing required fields");
     }
 
     setResult(parsed);
     setCurrentId(null);
 
   } catch (e) {
-    console.error(
-      "Bridge AI generation error:",
-      e
-    );
+    console.error("Bridge AI generation error:", e);
 
     setError(
       e?.message ||
