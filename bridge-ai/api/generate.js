@@ -9,24 +9,12 @@ export default async function handler(req, res) {
 
   try {
     var response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models",
       {
-        method: "POST",
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: "Say hello in one short sentence."
-                }
-              ]
-            }
-          ]
-        })
+        }
       }
     );
 
