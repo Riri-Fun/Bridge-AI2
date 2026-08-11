@@ -727,18 +727,8 @@ ${form.careerGoal}
         >
           <Bookmark size={15} /> Saved Templates
         </button>
-        <button
-          className={`brg-nav-btn ghost ${view === "settings" ? "active" : ""}`}
-          onClick={() => setView("settings")}
-        >
-          <SettingsIcon size={15} /> Settings
-        </button>
-        <button
-          className={`brg-nav-btn ghost ${view === "profile" ? "active" : ""}`}
-          onClick={() => setView("profile")}
-        >
-          <User size={15} /> Profile
-        </button>
+        
+        
       </div>
 
       <div className="brg-main">
